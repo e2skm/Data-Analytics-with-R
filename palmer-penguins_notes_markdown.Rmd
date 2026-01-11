@@ -1,0 +1,231 @@
+---
+title: "palmer-penguins_markdown"
+author: "E2"
+date: "2026-01-03"
+output: html_document
+---
+
+## Setting up the environment 
+Notes: Loading tidyverse and Palmer penguins packages 
+```{r loading packages}
+library(tidyverse)
+library(palmerpenguins)
+```
+  
+## Explore the data set
+Notes: Use tidyverse to perform exploratory data analysis  
+  
+### View dataset  
+```{r view the entire tibble}
+View(penguins)
+```
+  
+### View the first 6 rows
+```{r view first few rows}
+head(penguins)
+```
+  
+### Get column names
+```{r get attributes }
+colnames((penguins))
+```
+  
+### Get statistical summary
+```{r get statistical summary}
+summary(penguins)
+```
+  
+### View  the tibble's structure
+```{r view tibble structure}
+glimpse(penguins)
+```
+
+  
+### Sort data by bill length in **Ascending** Order 
+```{r sort by bill length ascending }
+penguins %>% arrange(bill_length_mm)
+```
+  
+### Sort data by bill length in **Descending** Order 
+```{r sort by bill length descending}
+penguins %>% arrange(-bill_length_mm)
+``` 
+  
+### Find the average bill length in mm for penguins in each island
+```{r calculate the average bill length by island}
+penguins %>% group_by(island) %>%  drop_na() %>% 
+  summarise(avg_bill_len_mm = mean(bill_length_mm)) 
+```
+  
+### Find the average bill length in mm for each penguins species
+```{r calculate the average bill length by species}
+penguins %>% group_by(species) %>%  drop_na() %>% 
+  summarise(avg_bill_len_mm = mean(bill_length_mm)) 
+```
+  
+### Find the maximum bill length in mm for penguins in each island
+```{r calculate the maximum bill length by island}
+penguins %>% group_by(island) %>%  drop_na() %>% 
+  summarise(max_bill_len_mm = max(bill_length_mm))
+```
+  
+### Find the maximum body mass in kilograms for penguins in each island
+```{r calculate the maximum body masss by island}
+penguins %>% group_by(island) %>%  drop_na() %>% 
+  summarise(max_body_mass_kg= max(body_mass_g) / 1000)
+```
+  
+### Find the maximum body mass in kilograms for each penguin species
+```{r calculate the maximum body masss by species}
+penguins %>% group_by(species) %>%  drop_na() %>% 
+  summarise(max_body_mass_kg= max(round(body_mass_g/1000,2)))
+```  
+  
+### Create custom table of key statstical metrics
+Notes: Find the maximum, average, standard deviation and minimum bill length in mm for penguins in each island and species
+```{r create a custom summary}
+penguins %>% group_by(island, species) %>%  drop_na() %>%
+  summarise(min_bill_len_mm = min(bill_length_mm),
+            avg_bill_len_mm = round(mean(bill_length_mm),2),
+            max_bill_len_mm = max(bill_length_mm),
+            std_bill_len_mm = sd(bill_length_mm))
+```
+  
+## Filter the Palmer Penguins' data to discover details   
+Notes: Create subsets of data to find information about specific demographics   
+  
+### Filter data for Adelie penguins
+Note: This species has an equal number of males and females, they are the most popular and can be found on all three islands. 
+```{r Get a statistical summary of the Adelie species}
+adelie_penguins <- penguins %>%  
+  filter(species == "Adelie") %>%  drop_na()
+summary(adelie_penguins)
+```
+  
+### Filter data for Gentoo penguins
+Note: This species has more males than females and they can only be found on Biscoe island
+```{r Get a statistical summary of the Gentoo species}
+gentoo_penguins <- penguins %>%  
+  filter(species == "Gentoo") %>%  drop_na()
+summary(gentoo_penguins)
+```
+### Filter data for Chinstrap penguins
+Note: This species has an equal number of males and females, they have the lowest population and all live on Dream island 
+```{r Get a statistical summary of the Chinstrap species}
+chinstrap_penguins <- penguins %>%  
+  filter(species == "Chinstrap") %>%  drop_na()
+summary(chinstrap_penguins)
+```
+### Filter by Dream island
+Note: This island has two penguin species, males out number females by one.
+```{r Get a statistical summary of the Dream island}
+dream_island <- penguins %>% 
+  filter(island == "Dream") %>% drop_na()
+summary(dream_island)
+```
+  
+### Filter data by Biscoe island
+Note: This island has the most penguins, contains two penguin species and there are three more males than females 
+```{r Get a statistical summary of the Biscoe island}
+biscoe_island <- penguins %>% 
+  filter(island == "Biscoe") %>%  drop_na()
+summary(biscoe_island)
+```
+
+  
+### Filter data by Torgersen island
+Note: This island only contains one species of penguins and females out number males by one  
+```{r Get a statistical summary of the Torgersen island}
+torgersen_island <- penguins %>% 
+  filter(island == "Torgersen") %>%  drop_na()
+summary(torgersen_island)
+```
+  
+## Visualise the Palmer Penguins' data 
+Notes: Create different visuals to share data insights clearer  
+  
+### **Scatter plot**: flipper length vs  body mass 
+Notes: Create a scatter plot to view flipper length and body mass relationship
+```{r flipperlength vs Body mass }
+ggplot(data = penguins, mapping = aes(x = flipper_length_mm, y = body_mass_g)) + 
+   geom_point()
+```
+  
+### **Scatter plot(trend line)**: flipper length vs  body mass 
+Notes: Create a scatter plot with a trend line to view flipper length and body mass relationship
+```{r flipperlength vs Body mass ft Trendline }
+ggplot(data = penguins, mapping = aes(x = flipper_length_mm, y = body_mass_g)) + 
+  geom_smooth() + geom_point()
+```
+
+### **Scatter plot**: flipper length vs  body mass across species
+Notes: Create a scatter plot to view flipper length and body mass relationship for each of the Penguin 🐧  species
+```{r flipperlength vs Body mass color coded}
+ggplot(data=penguins) +
+  geom_point(mapping = aes(x=flipper_length_mm ,y=body_mass_g, colour = species))
+```
+### **Separate Scatter plots**: flipper length vs  body mass by species
+Notes: Create scatter plots  to view flipper length and body mass relationship for each of the Penguin 🐧  species
+```{r flipperlength vs Body mass separate }
+ggplot(data=penguins) +
+  geom_point(mapping = aes(x=flipper_length_mm ,y=body_mass_g, colour = species, shape = species)) +  facet_wrap(~species)
+```
+
+### **Separate Scatter plots(with trendlines)**: flipper length vs  body mass by species Trendlines
+Notes: Create scatter plots  to view flipper length and body mass relationship for each of the Penguin 🐧  species and trend lines for each
+```{r flipperlength vs Body mass separate with Trendlines }
+ggplot(data=penguins, mapping = aes(x=flipper_length_mm ,y=body_mass_g, colour = species, shape = species))  +
+  geom_smooth() + geom_point() + facet_wrap(~species)
+```
+
+### **Final Scatter plot**: flipper length vs  body with text labels
+Notes: Create a colorful scatter plot to view flipper length and body mass relationship for each of the Penguin 🐧  species title, subtitle,caption, and annotation and trend line 
+```{r flipperlength vs Body mass with labels }
+ggplot(data=penguins) +
+  geom_smooth(mapping = aes(x=flipper_length_mm,y=body_mass_g,colour= "violet")) +
+  geom_point(mapping = aes(x=flipper_length_mm ,y=body_mass_g, colour = species)) +
+  labs(title = "Palmer Penguins: Body mass vs flipper length",
+       subtitle = "Sample of three species", 
+       caption = "Data collected by Dr. Kristen Gorman") + 
+  annotate("text",x= 220, y= 4110,label="Gentoos are the largest",
+           colour= "navyblue", font_face="bold",size=4.3, angle= 30)
+```
+  
+### **Adelie Penguins Bar plot**: sex on  each island  
+```{r Adelie demographics}
+ggplot(data = adelie_penguins) +
+  geom_bar(mapping = aes(x = island,fill = sex)) +
+  labs(title = "Demographics of Adeline Penguins ")
+```
+  
+### **Gentoo Penguins Bar plot**: sex on  each island  
+```{r Gentoo demographics}
+ggplot(data = gentoo_penguins) +
+  geom_bar(mapping = aes(x = island,fill = sex)) +
+  labs(title = "Demographics of Gentoo Penguins ")
+```
+  
+### **Chinstrap Penguins Bar plot**: sex on  each island  
+```{r Chinstrap demographics}
+ggplot(data = chinstrap_penguins) +
+  geom_bar(mapping = aes(x = island,fill = sex)) +
+  labs(title = "Demographics of Chinstrap Penguins ")
+```
+  
+### **Biscoe island Bar plot**: species and sex  
+```{r Biscoe island Demographics }
+ggplot(data = biscoe_island) + 
+  geom_bar(mapping = aes(x = species, fill = sex))
+```
+  
+### **Dream island Bar plot**: species and sex  
+```{r Dream island Demographics}
+ggplot(data = dream_island) + 
+  geom_bar(mapping = aes(x = species, fill = sex))
+```
+  
+### **Torgersen island Bar plot**: species and sex  
+```{r Torgersen island Demographics}
+ggplot(data = torgersen_island) + 
+  geom_bar(mapping = aes(x = species, fill = sex))
+```
