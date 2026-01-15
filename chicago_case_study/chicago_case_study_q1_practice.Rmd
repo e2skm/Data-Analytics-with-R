@@ -1,0 +1,274 @@
+---
+title: "chicago_case_study_q1_practice"
+author: "E2"
+date: "2026-01-06"
+output:
+  html_document: default
+  pdf_document: default
+---
+  
+## Set up the environment: load tidyverse and Divvy_Trips_2019_Q1 datasets
+Note: The tidyverse package was installed/updated using install.packages("tidyverse") in the 
+setting and the dataset: Divvy_Trips_2019_Q1.csv was downloaded from the following link: <https://divvy-tripdata.s3.amazonaws.com/index.html>
+```{r Setting up environment}
+library(tidyverse)
+divvy_trips_2019_q1 <- 
+  read_csv("datasets/divy_trips_12_months/chiacago_raw_data/Divvy_Trips_2019_Q1/Divvy_Trips_2019_Q1.csv")
+
+```
+  
+## Explore the dataset 
+### View the structure of the dataset
+```{r check the structure}
+#str(divvy_trips_2019_Q1)
+glimpse(divvy_trips_2019_q1)
+```
+
+  
+### View column names
+```{r checking column names}
+colnames(divvy_trips_2019_q1)
+```
+  
+### View first few rows
+```{r check first 6 rows}
+head(divvy_trips_2019_q1)
+```
+
+## Process the dataset
+Notes: create new columns  
+  
+### Create a column to store ride length
+```{r create ride_length column}
+divvy_trips_2019_q1 <- divvy_trips_2019_q1 %>% 
+  mutate(ride_length = end_time - start_time) 
+head(divvy_trips_2019_q1)
+``` 
+  
+### Create a column to store Day of the week
+```{r create day column}
+divvy_trips_2019_q1 <- divvy_trips_2019_q1 %>% 
+  mutate( day = wday(start_time, label = TRUE, abbr = FALSE))
+head(divvy_trips_2019_q1)
+```
+  
+### Create a column to store age
+```{r create age column}
+divvy_trips_2019_q1 <- divvy_trips_2019_q1 %>% 
+  mutate(age = 2019 - birthyear)
+head(divvy_trips_2019_q1)
+```
+  
+### Create a column to store age group
+```{r create age group column}
+divvy_trips_2019_q1 <- divvy_trips_2019_q1 %>% 
+  mutate(age_group = case_when(
+    age >=16 & age <= 24 ~ "Youth",
+    age >= 25 & age <= 44 ~ "Adult",
+    age >= 45 & age <= 64 ~ "Middle Aged",
+    age >= 65 ~ "Senior"))
+head(divvy_trips_2019_q1)
+```  
+  
+### Delete the column storing trip duration in seconds
+```{r drop tripduration}
+divvy_trips_2019_q1 <- divvy_trips_2019_q1 %>% 
+  select(-tripduration)
+colnames(divvy_trips_2019_q1)
+```
+  
+### Check for duplicates
+```{r get total number of duplicates}
+num_duplicate <- sum(duplicated(divvy_trips_2019_q1$trip_id))
+num_duplicate
+```
+  
+## Analyse the dataset to answer questions    
+### Find total number of trips for quarter one
+```{r find the total number of trips for this quarter}
+total_trips_q1 <- divvy_trips_2019_q1 %>% 
+  summarise(total  = n()) %>% 
+  pull(total)
+total_trips_q1
+```
+      
+### Find the number of cutomers and subscribers
+```{r compare number of rides for customers vs subscribers}
+usertype_counts <- divvy_trips_2019_q1 %>% 
+  count(usertype, sort = TRUE)
+usertype_counts
+```
+
+    
+### Find average ride length 
+```{r average ride_length}
+avg_ride_len <- divvy_trips_2019_q1 %>% 
+  summarise(mean(ride_length))
+avg_ride_len
+```
+  
+### Find the longest ride length
+```{r maximum ride length}
+max_ride_len <- divvy_trips_2019_q1 %>% 
+  summarise(max(ride_length))
+max_ride_len
+```
+      
+### Find the day with the most rides
+```{r most frequent day}
+mode_day <- divvy_trips_2019_q1 %>% 
+  count(day, sort = TRUE) %>% 
+  slice(1)
+mode_day
+```
+  
+### Find station where most rides start
+```{r popular start station}
+start_station_num1 <- divvy_trips_2019_q1 %>% 
+  count(from_station_name, sort = TRUE) %>% 
+  slice(1)
+start_station_num1
+```
+### Find station where most rides end
+```{r popular destination station}
+end_station_num1 <- divvy_trips_2019_q1 %>% 
+  count(to_station_name, sort = TRUE) %>% 
+  slice(1)
+end_station_num1
+```
+  
+### Find the youngest cyclist
+```{r youngest cyclist}
+youngest_cyclist <- divvy_trips_2019_q1 %>% drop_na() %>% 
+  summarise(min(age))
+youngest_cyclist
+```  
+  
+### Find the oldest cyclist
+```{r oldest cyclist}
+oldest_cyclist <- divvy_trips_2019_q1 %>% drop_na() %>% 
+  summarise(max(age))
+oldest_cyclist
+```
+  
+### Find the earliest birth year
+```{r calculate min birth year}
+min_birth_year <- divvy_trips_2019_q1 %>%  drop_na() %>% 
+  summarise(min(birthyear))
+min_birth_year
+
+```
+
+    
+### Find the information about the oldest cyclist
+```{r oldest cyclist info}
+oldest_cyclist_info  <- divvy_trips_2019_q1 %>% 
+  arrange(-age)
+oldest_cyclist_info
+```
+  
+### Find most used bike
+```{r calculate most used bike}
+most_used_bike <- divvy_trips_2019_q1 %>% 
+  count(bikeid, sort = TRUE) %>% 
+  slice(1)
+most_used_bike
+```
+
+        
+## Pivot tables
+### Average ride length by user type
+```{r ride length by user type}
+usertype_ride_len = divvy_trips_2019_q1 %>% 
+  group_by(usertype) %>% 
+  summarise(mean(ride_length))
+usertype_ride_len
+```
+  
+### Average ride length by gender
+```{r ride length by gender}
+gender_ride_len = divvy_trips_2019_q1 %>% # drop_na() %>% 
+  group_by(gender) %>% 
+  summarise(mean(ride_length))
+gender_ride_len
+```  
+   
+### Average ride length by day
+```{r ride length by day}
+day_ride_len <- divvy_trips_2019_q1 %>% 
+  group_by(day) %>% 
+  summarise(mean(ride_length ))  %>%
+  arrange(-`mean(ride_length)`)
+day_ride_len
+```
+  
+### Average ride length by age
+```{r ride length by age}
+age_ride_len <- divvy_trips_2019_q1 %>% 
+  group_by(age) %>% 
+  summarise(mean(ride_length ))
+age_ride_len
+```  
+   
+## Create data visualizations
+### Create a bar plot to view cyclist count by usertype
+```{r bar plot count rides for Customers and Subscribers}
+ggplot(data = divvy_trips_2019_q1 ) + 
+  geom_bar(mapping = aes(x = usertype, fill = usertype)) + 
+  labs(title = "Number of rides for Customers vs Subscribers",
+       caption = "There are 341906 rides by Subscribers and 23163 rides by Customers")
+```
+  
+### Create a bar plot to view rides count by gender
+```{r bar plot to count of rides by gender}
+ggplot(data =  divvy_trips_2019_q1) + 
+  geom_bar(mapping = aes(x = gender, fill = gender))
+```
+  
+### Create a scatter plot to visualise age and average ride length
+```{r age vs average ride length}
+ggplot(data = age_ride_len, mapping = aes(x = age, y = `mean(ride_length)`)) +
+  geom_point() + geom_smooth()
+
+```
+  
+### Create a table and a graph to  view number of rides by age
+```{r view count of rides by age}
+rides_by_age <- divvy_trips_2019_q1 %>% drop_na() %>% 
+  count(age)
+rides_by_age %>%  arrange(-n)
+ggplot(data = rides_by_age, mapping = aes(x = age, y = n)) + 
+  geom_smooth() + 
+  labs(title = "Number of rides by age", caption = "Cyclist age 30 have the most rides" ) 
+```
+  
+### Create a column chart to view average ride length by day
+```{r column chart to view average ride length by day}
+ggplot(data = day_ride_len) +
+  geom_col(mapping = aes(x = `mean(ride_length)`, y = day, fill = day))
+```
+  
+### Create a table and pie chart to view cyclist by age group
+Note: Create an aggregate table to group by and count  age group, add a column to store percentages 
+and create a pie chart
+```{r table and pie chart to view cyclist by age group}
+rides_by_age_group <- divvy_trips_2019_q1 %>% drop_na() %>% 
+  count(age_group) 
+total_num_rides <- divvy_trips_2019_q1 %>%  drop_na() %>%  count()
+total_num_rides 
+rides_by_age_group <- rides_by_age_group %>% 
+  mutate(percentage_age_group = (n / 345357 * 100))
+rides_by_age_group %>%  arrange (-n)
+ggplot(data = rides_by_age_group, mapping = aes(x = "", y = percentage_age_group, fill = age_group)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y", start = 0) + 
+  theme_void()
+```
+  
+### Save the cleaned dataset
+```{r save the processed dataset}
+write_csv(divvy_trips_2019_q1,"C:\\Users\\itumeleng\\Documents\\R_programs\\datasets\\divy_trips_12_months\\chicago_processed_data\\Divvy_Trips_2019_Q1\\clean_divvy_trips_2019_q1.csv")
+```
+
+    
+
