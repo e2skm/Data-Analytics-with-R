@@ -1,0 +1,173 @@
+---
+title: "chicago_case_study_q1_answers"
+author: "E2"
+date: "2026-01-14"
+output: html_document
+---
+
+# **Case Study: Cyclist Bike Share Quarter one**
+  
+## 1. ASK
+**Business Task**: Determine how annual members and casual riders use cyclist differently.
+- Why would casual riders buy Cyclist annual memberships?
+- How can Cyclist use digital media to influence casual riders to become members?    
+**Goal**: To gain insights that will help the marketing team design strategies to convert casual riders into annual members, as members are considered more profitable for the company's future growth  
+**Stakeholders**:  
+- **Lily Moreno**: Marketing Director who manages the marketing analytics team.   
+- **Marketing Analytics Team**: Me and my colleagues who collect and analyse data to support decision making.   
+-**Executive Team**: The decision makers, who use the results of the marketing analytics team to guide
+their final decisions.  
+-**Users/Cyclist/Rider**: Divided into **annual members** also referred to as **Subscribers** who pay a subscription,   
+and **casual riders** also referred to as **Customers** who pay once off.    
+
+## 2. Prepare
+This data was made publicly available by Motivate International Inc.  
+-**Data Integrity**: This data does not include Personal Identifiable Information like Identity numbers or 
+credit card numbers, so users privacy is protected.    
+- **Data location**:  Clik this link to [download the dataset](https://divvy-tripdata.s3.amazonaws.com/Divvy_Trips_2019_Q1.zip)  
+- **Data Organization**: the data is organised as a .zip file Divvy_Trips_2019_Q1.zip which contain data stored in .csv format.   
+-**Tool Selection**: I choose to use r, since it can handle large datasets, create visuals and reproducible results.
+
+## 3. Process  
+### Setting up the environment  
+```{r loading tidyverse and dataset}
+library(tidyverse)
+bikeshare_trips_2019_q1 <- 
+  read_csv("datasets/divy_trips_12_months/chiacago_raw_data/Divvy_Trips_2019_Q1/Divvy_Trips_2019_Q1.csv")
+```
+  
+### View and Rename columns  
+```{r Changing and returning column names}
+print("Here is a list of the column names:")
+colnames(bikeshare_trips_2019_q1)
+bikeshare_trips_2019_q1 <- bikeshare_trips_2019_q1 %>% 
+  rename(
+    stop_time = end_time,
+    bike_id = bikeid,
+    trip_duration = tripduration,
+    user_type = usertype,
+    birth_year = birthyear)
+print("Five columns have been renamed here are the current column names:")
+colnames(bikeshare_trips_2019_q1)
+```
+   
+### Create a ride length column     
+```{r calculating ride_length}
+bikeshare_trips_2019_q1 <- bikeshare_trips_2019_q1 %>% 
+  mutate(ride_length = stop_time - start_time)
+print("Here is the structure of our tibble with the new ride_length column added:")
+glimpse(bikeshare_trips_2019_q1)
+```
+    
+### Convert ride length to numeric  
+ride length: is stored  in minutes we will convert it to numeric for use in calculations  
+```{r converting ride_length}
+bikeshare_trips_2019_q1$ride_length <- as.numeric(as.character(bikeshare_trips_2019_q1$ride_length))
+print("Here is the structure of our tibble with the ride_length column converted to numeric:")
+glimpse(bikeshare_trips_2019_q1)
+```
+  
+### Create a column to store Day of the week  
+```{r create day column}
+bikeshare_trips_2019_q1 <- bikeshare_trips_2019_q1 %>% 
+  mutate( week_day = wday(start_time, label = TRUE, abbr = FALSE))
+print("Here are the structure of our tibble with the week_day column added:")
+glimpse(bikeshare_trips_2019_q1)
+```
+  
+### Remove negative ride_length  
+```{r filtering out negative ride_length}
+bikeshare_trips_2019_q1 <- bikeshare_trips_2019_q1 %>% 
+  filter(ride_length > 0)
+print("Here are the structure of our tibble with the negative values from the ride_length removed:")
+glimpse(bikeshare_trips_2019_q1)
+```
+  
+### Check for duplicates   
+```{r check duplicates}
+num_duplicates <- sum(duplicated(bikeshare_trips_2019_q1))
+num_duplicates
+```
+
+
+  
+## 4.Analyse  
+### Get a statistical summary of the entire tibble   
+```{r tibble summary}
+summary(bikeshare_trips_2019_q1)
+```
+  
+### Get a statistical summary of the ride length column   
+```{r ride_length summary}
+summary(bikeshare_trips_2019_q1$ride_length)
+```
+  
+### Compare ride length between annual members and casual riders 
+```{r calculating average ride_length by  user_type}
+bikeshare_trips_2019_q1 %>% 
+  group_by(user_type) %>% 
+  summarise(average_ride = mean(ride_length))
+# aggregate(bikeshare_trips_2019_q1$ride_length ~ bikeshare_trips_2019_q1$user_type, FUN = mean)
+
+```
+  
+### See the average ride time by each day for annual members vs casual users    
+```{r calculating average ride_length by  user_type for each week_day}
+bikeshare_trips_2019_q1 %>%
+  group_by(user_type, week_day) %>%
+  summarize(average_ride = mean(ride_length))
+# aggregate(q1_2019_v2$ride_length ~ q1_2019_v2$user_type + q1_2019_v2$day_of_week, FUN = mean)
+
+```
+  
+### See the number of rides and average ride time by each day for annual members vs casual users 
+```{r calculating total rides and average ride_length by  user_type for each week_day}
+bikeshare_trips_2019_q1 %>% 
+  group_by(user_type, week_day) %>% 
+  summarise(number_of_rides = n(), average_duration = mean(ride_length)) %>% 
+  arrange(user_type, week_day) 
+```
+  
+## 5.Share    
+### Visualise percentage of rides by user type   
+```{r Creating pie chart to view rides by user_type}
+total_rides_q1 <- bikeshare_trips_2019_q1 %>% 
+  summarise(total = n()) %>% 
+  pull(total)
+total_rides_q1
+rides_by_user_type <- bikeshare_trips_2019_q1 %>% 
+  count(user_type, sort = TRUE)
+rides_by_user_type
+percentage_rides_by_user_type <- rides_by_user_type %>% 
+  mutate(percentage_trips = n / total_rides_q1 * 100)
+percentage_rides_by_user_type <- percentage_rides_by_user_type %>% 
+  select(-n)
+percentage_rides_by_user_type
+ggplot(data = percentage_rides_by_user_type, mapping = aes(x = "",y = percentage_trips, fill = user_type)) +
+  geom_bar(stat = "identity", width = 1) + 
+  coord_polar("y", start = 0) +
+  theme_void()
+```
+    
+    
+### Visualise number of rides by user type for each week day     
+```{r Creating column chart of rides by user type for each week day }
+bikeshare_trips_2019_q1 %>% 
+  group_by(user_type, week_day) %>% 
+  summarise(number_of_rides = n()) %>% 
+  ggplot(aes(x = week_day, y = number_of_rides, fill = user_type)) +
+  geom_col(position = "dodge") +
+  labs(title = "Total Rides by Day of Week: Members vs. Casual Riders",
+       subtitle = "Analysis of 2019 Q1 Data",
+       x = "Day of Week (1=Sunday, 7=Saturday)",
+       y = "Number of Rides")
+```
+  
+## 6.Act   
+### Recommendations   
+1.**Target the 30% of commuter Casual riders**:  Design a marketing campaign specifically for these casual riders who use cyclist to commute to work on week days  that outline the the financial benefits and convenience of an annual membership for daily travel compared to purchasing multiple single-ride or full-day passes     
+2.**Provide weekend only initiatives via Social media**: Since Casual riders peak on weekends leverage online social platforms to advertise "Weekend-only" passes that introduce casual riders to the benefits of membership.       
+3. **Advertise the fleet of bikes**:  Create advertisements to showcase the variety and accessibility of the fleet. Highlighting that an annual membership provides unlimited, guaranteed access to this inclusive fleet—including of the bikes for different purposes that can accommodate different needs.   
+
+
+
