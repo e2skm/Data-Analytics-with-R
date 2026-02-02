@@ -1,0 +1,225 @@
+---
+title: "Teleco_Customer_churn"
+author: "E2"
+date: "2026-02-01"
+output: html_document
+---
+
+# Telecommunications services customer churn    
+## ASK: Define the business problem, project objective, invloved stakeholders,etc.    
+- **Business Task**: Reduce the churn rate by 5% to 10% by offering proactive incentives to "at-risk" customers.  
+- **Objective**: Build a predictive model to identify customers who are likely to cancel their subscription service.    
+- **Key Stakeholders**: Retention Marketing Team and Customer Support.  
+- **Question**: What are the top three predictors of a customer leaving, and can we use these predictors to predict churn with at least 75% sensitivity?      
+    
+## Prepare: Data source, structure and integrity  
+This data was made publicly available by IBM, and downloaded from Kaggle.  
+- **Data Integrity**: This data does not include Personal Identifiable Information like Phone numbers, Identity numbers or 
+credit card numbers, so users privacy is protected.    
+- **Data location**:  Click this link to [find the dataset](https://www.kaggle.com/datasets/blastchar/telco-customer-churn)     
+- **Data Organization**: the data is organised as a .csv file named "WA_Fn-UseC_-Telco-Customer-Churn.csv".    
+- **Tool Selection**: I choose to use r, for its robust statistical packages and clean data manipulation syntax.     
+  
+## Process: Load, Clean and Transform the dataset  
+### Setting up the environment  
+```{r loading the libraries and dataset}
+library("tidyverse")
+library ("caret")
+library("randomForest")
+telco_customer_churn <- read_csv("datasets/telco_customer_churn.csv")
+```
+### View and Rename columns  
+```{r renaming columns}
+print("Here is a list of the column names:")
+colnames(telco_customer_churn)
+telco_customer_churn <- telco_customer_churn %>% 
+  rename( customer_id = customerID,
+          senior_citizen = SeniorCitizen,
+          partner = Partner,
+          dependents = Dependents,
+          phone_service = PhoneService,
+          multiple_lines = MultipleLines,
+          internet_service = InternetService,
+          online_security = OnlineSecurity,
+          online_backup = OnlineBackup,
+          device_protection = DeviceProtection,
+          tech_support = TechSupport,
+          streaming_tv = StreamingTV,
+          streaming_movies = StreamingMovies,
+          contract = Contract,
+          paperless_billing = PaperlessBilling,
+          payment_method = PaymentMethod,
+          monthly_charges = MonthlyCharges,
+          total_charges = TotalCharges,
+          churn = Churn)
+print("Nineteen columns have been renamed here are the current column names:")
+colnames(telco_customer_churn)
+```
+### Check for missing (NA) values
+```{r checking NA values in each column}
+num_na <- telco_customer_churn  %>%
+  summarise(across(everything(), ~ sum(is.na(.))))
+num_na
+```
+### Convert total_charges to numeric (this creates the NAs from the blank spaces)
+```{r coverting total_charges to numeric}
+class(telco_customer_churn$total_charges)
+telco_customer_churn <- telco_customer_churn %>%
+  mutate(total_charges = as.numeric(as.character(total_charges)))
+class(telco_customer_churn$total_charges)
+```
+
+### Convert the churn column to a Factor
+```{r converting churn to factor}
+class(telco_customer_churn$churn)
+telco_customer_churn$churn <- as.factor(telco_customer_churn$churn)
+class(telco_customer_churn$churn)
+```
+
+
+### Remove the eleven empty rows    
+```{r deleting rows with NA values in the total_charges column}
+telco_customer_churn <- telco_customer_churn %>% 
+  drop_na(total_charges)
+num_na <- telco_customer_churn  %>%
+  summarise(across(everything(), ~ sum(is.na(.))))
+num_na
+```
+
+### Check for duplicates   
+```{r check duplicates}
+num_duplicates <- sum(duplicated(telco_customer_churn))
+num_duplicates
+```
+
+### Remove the customer_id column since it is not necessary   
+```{r dropping customer_id attribute}
+telco_customer_churn <- telco_customer_churn %>% 
+  select(-customer_id)
+head(telco_customer_churn)
+```
+
+### Save the clean dataset 
+```{r saving processed dataset}
+write_csv(telco_customer_churn,"C:\\Users\\itumeleng\\Documents\\R_programs\\datasets\\processed\\clean_telco_customer_churn.csv")
+```
+
+
+
+## Analyse: Explore, aggregate and model the data  
+### Get a statistical summary of the entire tibble  
+```{r Generating tibble stats summary}
+summary(telco_customer_churn) 
+```
+### Get total number of customers  
+```{r Calculating total number of customers}
+num_customers <- telco_customer_churn %>% 
+  summarise(total = n()) %>% 
+  pull(total)
+num_customers
+```
+
+### Group and compare customers using churn coluimn
+```{r aggregating data by churn}
+churn_summary <- telco_customer_churn %>%
+  group_by(churn) %>%
+  summarise(average_tenure = mean(tenure),
+    monthly_avgerage = mean(monthly_charges),
+    count = n())
+churn_summary <- churn_summary %>% 
+  mutate(percentage = round(count / num_customers * 100,2))
+churn_summary
+```
+### Split Data for model training
+```{r spliting the data}
+set.seed(42)
+train_index <- createDataPartition(telco_customer_churn$churn, p = 0.8, list = FALSE)
+train_data <- telco_customer_churn[train_index, ]
+test_data  <- telco_customer_churn[-train_index, ]
+```
+
+
+### Train the model
+```{r Training the model}
+rf_model <- randomForest(churn ~ ., data = train_data, ntree = 100, importance = TRUE)
+```
+
+
+### Use the model to make predictions  
+```{r making predictions using model}
+predictions <- predict(rf_model, test_data)
+```
+
+### Get the probability of predictions
+```{r making new predictions using probability }
+prob_predictions <- predict(rf_model, test_data, type = "prob")
+```
+
+### Set a threshold of 30% to and make new more accurate predictions  
+```{r adjusting threshold from 50% to 30%}
+custom_threshold <- 0.30
+new_predictions <- ifelse(prob_predictions[, "Yes"] > custom_threshold, "Yes", "No")
+```
+
+### Convert back to factors so confusionMatrix works  
+```{r converting new prediction to factors for confusion matrix}
+new_predictions <- factor(new_predictions, levels = c("No", "Yes"))
+```
+
+
+### Evaluate the predictions made against actual data  
+```{r evaulating model predictions}
+conf_matrix <- confusionMatrix(predictions, test_data$churn, positive = "Yes")
+```
+
+### Evaluate the new predictions made against actual data  
+```{r evaulating model new predictions}
+new_conf_matrix <- confusionMatrix(new_predictions, test_data$churn, positive = "Yes")
+```
+
+## Share: Communicate insights through visuals  
+### Pie chart to visualize churn rate  
+```{r Creating Pie chart for churn}
+ggplot(churn_summary, aes(x = "", y = percentage, fill = churn)) + 
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y",start = 0) +
+  scale_fill_manual(values = c("No" = "green", "Yes" = "red")) +
+  theme_void() +
+  labs(title = "Overall Customer Churn Rate") +
+  geom_text(aes(label = paste0(percentage, "%")), 
+            position = position_stack(vjust = 0.5), 
+            color = "white", size = 5)
+```
+
+
+### Density plot of Tenure  
+```{r Creating Denisty Plot for Tenure}
+ggplot(telco_customer_churn, aes(x = tenure, fill = churn)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "When do Customers Leave? (Tenure Distribution)",
+       x = "Months with Company",
+       y = "Density") +
+  theme_minimal() +
+  scale_fill_manual(values = c("No" = "green", "Yes" = "red"))
+
+```
+
+### Initial model confusion matrix  
+```{r viewing model results}
+conf_matrix
+```
+  
+### Initial Model Summary (Standard 50% Threshold)  
+The initial Random Forest model, utilizing a default 50% probability threshold, achieved an overall accuracy of 78.65%. While this model was highly effective at identifying loyal customers who were likely to stay 90.89% specificity), it performed poorly regarding the primary business task of detecting churn. With a sensitivity of only 44.77%, the model failed to identify more than half of the actual churners in the test set—missing 206 at-risk customers. This "conservative" approach resulted in fewer false alarms, but it left the business vulnerable to losing a significant portion of its customer base without prior warning.  
+
+### Optimized model confusion matrix   
+```{r viewing new model results}
+new_conf_matrix
+```
+### Optimized Model Summary (Adjusted Threshold)
+To better align the analysis with the business goal of proactive retention, we adjusted the classification threshold from 0.5 down to 0.3. This adjustment instructed the model to flag customers as "high-risk" even if they showed only a 30% probability of leaving. This modification successfully increased the sensitivity to 65.68%, catching 245 churners—an improvement of 78 customers over the initial model. While this shift led to a slight decrease in overall accuracy (75.52%) and an increase in false positives (loyal customers flagged as at-risk), it significantly reduced the number of missed churners from 206 to 128. This version of the model is much more valuable for the marketing team, as it provides a broader and more accurate "hit list" for retention campaigns.  
+  
+## Act: Provide Recommendations   
+- **Option 1**: Create a Campaign to move high-risk Month-to-Month users onto a 1-year discounted plan.  
+- **Option 2**: Improve the onboarding process for "Fiber Optic" customers, as they show high churn in the first 3 months.  
+- **Option 3**: Target "Senior Citizens" with specific technical support packages, as they have a higher-than-average churn rate.  
