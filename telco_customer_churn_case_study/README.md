@@ -45,4 +45,18 @@ This project identifies high-risk customers for a telecommunications provider us
   - Pie charts for overall churn distribution.  
   - Bar charts comparing churn risk by contract type.
 - **Model Comparison:**  
-  - **Standard Model:** High accurac
+  - **Standard Model:** High accuracy (**78%**) but low sensitivity (**45%**).  
+  - **Optimized Model:** Balanced accuracy (**75.5%**) with high sensitivity (**65.7%**).
+
+### 6. Act
+- **Incentive Strategy:** Move high-risk Month-to-Month users to discounted **1-year contracts**.  
+- **Service Quality:** Launch a *Service Health Check* for Fiber Optic users within their first **3 months**.  
+- **Support:** Provide tailored technical support packages for **Senior Citizens**.
+
+---
+
+## 💻 How to Run the Code
+1. Ensure you have **R** and **RStudio** installed.  
+2. Install the necessary libraries:
+   ```r
+   install.packages(c("tidyverse", "caret", "randomForest"))
