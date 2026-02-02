@@ -101,7 +101,7 @@ head(telco_customer_churn)
 
 ### Save the clean dataset 
 ```{r saving processed dataset}
-write_csv(telco_customer_churn,"C:\\Users\\itumeleng\\Documents\\R_programs\\datasets\\processed\\clean_telco_customer_churn.csv")
+write_csv(telco_customer_churn,"datasets\\clean_telco_customer_churn.csv")
 ```
 
 
@@ -223,3 +223,4 @@ To better align the analysis with the business goal of proactive retention, we a
 - **Option 1**: Create a Campaign to move high-risk Month-to-Month users onto a 1-year discounted plan.  
 - **Option 2**: Improve the onboarding process for "Fiber Optic" customers, as they show high churn in the first 3 months.  
 - **Option 3**: Target "Senior Citizens" with specific technical support packages, as they have a higher-than-average churn rate.  
+
