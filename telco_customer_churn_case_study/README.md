@@ -1,5 +1,7 @@
 # Telco Customer Churn: Predictive Retention Analysis
 
+> **[🚀 View the Interactive Data Report Here](https://e2skm.github.io/Data-Analytics-with-R/telco_customer_churn_case_study/)**
+
 ## 📌 Project Overview
 This project identifies high-risk customers for a telecommunications provider using machine learning. By analyzing customer demographics and service usage patterns, I developed a predictive model to identify potential churners before they leave, allowing for proactive retention strategies.
 
@@ -60,4 +62,3 @@ This project identifies high-risk customers for a telecommunications provider us
 2. Install the necessary libraries:
    ```r
    install.packages(c("tidyverse", "caret", "randomForest"))
-(Click this link to view the interactive report)[https://e2skm.github.io/Data-Analytics-with-R/telco_customer_churn_case_study/]
