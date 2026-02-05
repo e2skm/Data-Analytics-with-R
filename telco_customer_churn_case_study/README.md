@@ -60,3 +60,4 @@ This project identifies high-risk customers for a telecommunications provider us
 2. Install the necessary libraries:
    ```r
    install.packages(c("tidyverse", "caret", "randomForest"))
+   (Click this link to view the interactive report)[https://e2skm.github.io/Data-Analytics-with-R/telco_customer_churn_case_study/]
